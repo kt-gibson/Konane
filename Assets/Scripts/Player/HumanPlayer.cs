@@ -70,9 +70,9 @@ namespace Konane.Game
             boardUI = GameObject.FindObjectOfType<Board>();
             //Log initial set of legal moves based on board positions
             legalStartMoves = boardUI.GetStartMoves(this.isBlack);//hard coding this bool for testing purposes - will need to passed in as part of class instantiation
-            Debug.Log("Count of legalMoves: " + legalStartMoves.Count);
+            /*Debug.Log("Count of legalMoves: " + legalStartMoves.Count);
             for (int i = 0; i < legalStartMoves.Count; i++)
-                Debug.Log("Value of legalMove board name at position " + i + ": " + legalStartMoves[i]);
+                Debug.Log("Value of legalMove board name at position " + i + ": " + legalStartMoves[i]);*/
         }
 
         public override void NotifyTurnToMove()

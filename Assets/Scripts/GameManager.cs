@@ -30,6 +30,11 @@ namespace Konane.Game
         bool blackToMove;
         int moveCount;
 
+        public enum AIDifficulty
+        {
+            Random
+        }
+        public AIDifficulty diff;
         public enum PlayerType
         {
             Human,
@@ -38,7 +43,6 @@ namespace Konane.Game
         public enum GameState 
         { 
             Playing,
-            //Stalemate,
             GameOver
         }
         GameState gs;
@@ -55,7 +59,6 @@ namespace Konane.Game
             boardUI.CreateBoard(activeBoard, searchBoard);
             blackToMove = true;
             moveCount = 0;
-            //playerBlack = new HumanPlayer(activeBoard); //Temp for testing
             NewGame(whitePlayerType, blackPlayerType);
         }
 
@@ -78,9 +81,7 @@ namespace Konane.Game
 
         void NotifyPlayerToMove()
         {
-            //gs = GetGameState() - This line will eventually be needed to check for gameover conditions - for now don't need it
             //First player to run out of moves as it becomes their turn loses
-            //Bug - this will force a loss scenario for opening 4 moves
             if (!mg.HasLegalMoves(activeBoard, blackToMove) && moveCount > 3)
             {
                 if (blackToMove)
@@ -112,7 +113,7 @@ namespace Konane.Game
 
             boardUI.UpdateBoard(activeBoard);
 
-            activeBoard.PrintBoard();
+            //activeBoard.PrintBoard();
 
             blackToMove = !blackToMove;
             NotifyPlayerToMove();
@@ -120,13 +121,6 @@ namespace Konane.Game
 
         void OnStartMoveChosen(Coord move)
         {
-            /*
-             * Do the following
-             * 1. Apply the selected move by calling the board state and and the board UI methods to update the piece selection/removal
-             * 2. Update the board
-             * 3. Notify the opposing player to move after setting the blackToMove flag
-             */
-
             activeBoard.MakeStartMove(move);
             searchBoard.MakeStartMove(move);
 
@@ -149,7 +143,7 @@ namespace Konane.Game
             if (playerType == PlayerType.Human)
                 player = new HumanPlayer(activeBoard, isBlack);
             else
-                player = new AIPlayer(searchBoard, isBlack);
+                player = new AIPlayer(searchBoard, isBlack, diff);
 
             player.onMoveChosen += OnMoveChosen;
             player.onStartMoveChosen += OnStartMoveChosen; //+= is the same as Delegate.Combine -= is the same as Delegate.Remove
