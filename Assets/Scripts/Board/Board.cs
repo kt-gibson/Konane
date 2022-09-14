@@ -135,12 +135,27 @@ namespace Konane.Game
             }
             else
             {
-                moves.Add(squareRenderers[0, 0].name);
-                moves.Add(squareRenderers[3, 3].name);
-                moves.Add(squareRenderers[4, 4].name);
-                moves.Add(squareRenderers[7, 7].name);
+                //White player can only pick a piece orthogonal to black's selection
+                for (int rank = 0; rank < 8; rank++)
+                    for (int file = 0; file < 8; file++)
+                    {
+                        if (pieceRenderers[file, rank].name == "none")
+                        {
+                            //Check up
+                            if (rank + 1 < 8)
+                                moves.Add(squareRenderers[file, rank + 1].name);
+                            //Check down
+                            if (rank - 1 > 0)
+                                moves.Add(squareRenderers[file, rank - 1].name);
+                            //Check left
+                            if (file - 1 > 0)
+                                moves.Add(squareRenderers[file - 1, rank].name);
+                            //Check right
+                            if (file + 1 < 8)
+                                moves.Add(squareRenderers[file + 1, rank].name);
+                        }
+                    }
             }
-
             return moves;
         }
 

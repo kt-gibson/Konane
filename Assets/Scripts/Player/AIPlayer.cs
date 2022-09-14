@@ -29,20 +29,21 @@ namespace Konane.Game
             this.boardState = boardState;
             this.isBlack = isBlack;
             boardUI = GameObject.FindObjectOfType<Board>();
-            legalStartMoves = boardUI.GetStartMoves(this.isBlack);
             this.diff = diff;
         }
 
         public override void NotifyTurnToMove()
         {
-            if (moves > 2)
+            if (moves > 1)
                 mg.GeneratePlayerMoves(this.boardState, ref legalMoves, this.isBlack);
+            else
+                legalStartMoves = boardUI.GetStartMoves(this.isBlack);
         }
 
         public override void Update()
         {
             //Konane has special start move logic - handle this separately for easy to read code
-            if (moves <= 2)
+            if (moves <= 1)
                 FindRandomStartMove(); // Going to always open with random start moves. I suspect it might be too much to ask the computer to search all parameters to see what is optimal
             else
             {

@@ -69,7 +69,6 @@ namespace Konane.Game
             cam = Camera.main;
             boardUI = GameObject.FindObjectOfType<Board>();
             //Log initial set of legal moves based on board positions
-            legalStartMoves = boardUI.GetStartMoves(this.isBlack);//hard coding this bool for testing purposes - will need to passed in as part of class instantiation
             /*Debug.Log("Count of legalMoves: " + legalStartMoves.Count);
             for (int i = 0; i < legalStartMoves.Count; i++)
                 Debug.Log("Value of legalMove board name at position " + i + ": " + legalStartMoves[i]);*/
@@ -79,17 +78,16 @@ namespace Konane.Game
         {
             currState = InputState.None; //This is here so that I can prevent multiple HandleInput calls in the update method. I'll set currState to something else and gate based off that
             // if moves >= 2 then do the dictionary legal moves method
-            if (moves > 2)
-            {
-                //legalMoves = new Dictionary<string, List<string>>();
+            if (moves > 1)
                 mg.GeneratePlayerMoves(this.boardState, ref legalMoves, this.isBlack);
-            }
+            else
+                legalStartMoves = boardUI.GetStartMoves(this.isBlack);
         }
 
         public override void Update()
         {
             //Konane has special start move logic - handle this separately for easy to read code
-            if (moves <= 2)
+            if (moves <= 1)
                 HandleStartInput(); //Note: This is called a lot of times per second - add a flag so it only triggers once per click
             else
                 HandleInput();
