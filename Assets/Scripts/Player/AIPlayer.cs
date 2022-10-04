@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Konane.Game.HumanPlayer;
+//using static Konane.Game.HumanPlayer;
 
 namespace Konane.Game
 {
@@ -34,15 +34,18 @@ namespace Konane.Game
 
         public override void NotifyTurnToMove()
         {
-            if (moves > 1)
-                mg.GeneratePlayerMoves(this.boardState, ref legalMoves, this.isBlack);
-            else
-                legalStartMoves = boardUI.GetStartMoves(this.isBlack);
+            mg.GeneratePlayerMoves(this.boardState, ref legalMoves, this.isBlack);
+        }
+
+        public override void NotifyOpeningTurnToMove()
+        {
+            legalStartMoves = boardUI.GetStartMoves(this.isBlack);
         }
 
         public override void Update()
         {
             //Konane has special start move logic - handle this separately for easy to read code
+            //NOTE Sept 19 - consider moving this from Update (called thousands of times) to NotifyTurnToMove() - use a move found flag to gate making the actual move
             if (moves <= 1)
                 FindRandomStartMove(); // Going to always open with random start moves. I suspect it might be too much to ask the computer to search all parameters to see what is optimal
             else

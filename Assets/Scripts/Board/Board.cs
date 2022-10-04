@@ -61,6 +61,34 @@ namespace Konane.Game
             searchBoard.Init(pieceRenderers);
         }
 
+        //Function that will load a board from a given setup
+        public void LoadBoard(BoardState activeBoard, BoardState searchBoard, string[] testBoard)
+        {
+            //Need to update a given square with a piece (or none) and update both the UI and board states
+            for (int rank = 0; rank < 8; rank++)
+                for (int file = 0; file < 8; file++)
+                {
+                    switch (testBoard[rank][file])//Inverted because the inspector view is inverted
+                    {
+                        case 'b':
+                            pieceRenderers[file, rank].name = "black";
+                            pieceRenderers[file, rank].sprite = black;
+                            break;
+                        case 'w':
+                            pieceRenderers[file, rank].name = "white";
+                            pieceRenderers[file, rank].sprite = white;
+                            break;
+                        default:
+                            pieceRenderers[file, rank].name = "none";
+                            pieceRenderers[file, rank].sprite = null;
+                            break;
+                    }
+                }
+
+            activeBoard.Init(pieceRenderers);
+            searchBoard.Init(pieceRenderers);
+        }
+
         void SetupBoard()
         {
             SetSquareColors();

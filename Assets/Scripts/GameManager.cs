@@ -30,7 +30,12 @@ namespace Konane.Game
         bool blackToMove;
         int moveCount;
 
-        public enum AIDifficulty
+        //Test board will look inverted in the inspector because the board loads (0,0) as bottom left where the array will see (0,0) as top left
+        public string[] testBoard = new string[8]; //Used to load a custom board state. Will be needed for minimax testing on simple configurations (w/b are pieces, x is empty space)
+        public bool loadTestBoard = false;
+        public bool blackMove = true;
+
+        public enum AIDifficulty //Consider changing this to a scriptable object. More customizable
         {
             Random
         }
@@ -59,6 +64,13 @@ namespace Konane.Game
             boardUI.CreateBoard(activeBoard, searchBoard);
             blackToMove = true;
             moveCount = 0;
+
+            if (loadTestBoard)
+            {
+                blackToMove = blackMove;
+                boardUI.LoadBoard(activeBoard, searchBoard, testBoard);
+            }
+
             NewGame(whitePlayerType, blackPlayerType);
         }
 
@@ -82,7 +94,7 @@ namespace Konane.Game
         void NotifyPlayerToMove()
         {
             //First player to run out of moves as it becomes their turn loses
-            if (!mg.HasLegalMoves(activeBoard, blackToMove) && moveCount > 3)
+            if (!mg.HasLegalMoves(activeBoard, blackToMove) && moveCount > 2)
             {
                 if (blackToMove)
                     Debug.Log("Black loses!");
@@ -100,7 +112,11 @@ namespace Konane.Game
 
                 moveCount++;
                 currentPlayer = blackToMove ? playerBlack : playerWhite;
-                currentPlayer.NotifyTurnToMove();
+
+                if (moveCount > 2)
+                    currentPlayer.NotifyTurnToMove();
+                else
+                    currentPlayer.NotifyOpeningTurnToMove();
             }
         }
 

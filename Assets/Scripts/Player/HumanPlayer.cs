@@ -78,10 +78,14 @@ namespace Konane.Game
         {
             currState = InputState.None; //This is here so that I can prevent multiple HandleInput calls in the update method. I'll set currState to something else and gate based off that
             // if moves >= 2 then do the dictionary legal moves method
-            if (moves > 1)
-                mg.GeneratePlayerMoves(this.boardState, ref legalMoves, this.isBlack);
-            else
-                legalStartMoves = boardUI.GetStartMoves(this.isBlack);
+            mg.GeneratePlayerMoves(this.boardState, ref legalMoves, this.isBlack);
+                
+        }
+
+        public override void NotifyOpeningTurnToMove()
+        {
+            currState = InputState.None;
+            legalStartMoves = boardUI.GetStartMoves(this.isBlack);
         }
 
         public override void Update()

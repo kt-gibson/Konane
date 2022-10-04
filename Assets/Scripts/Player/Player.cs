@@ -13,6 +13,8 @@ namespace Konane.Game
 
         public abstract void NotifyTurnToMove();
 
+        public abstract void NotifyOpeningTurnToMove();
+
         //Note: I suspect Lague assigns the delegate function inside GameManger.OnMoveChosen since he sets player.onMoveChose -= OnMoveChosen
         //This would align with a delegate definition, where the delegate has to be assigned some function at some point.
         //Advantage of delegates is that they can be assigned to void functions, accessing some of the event functionality
