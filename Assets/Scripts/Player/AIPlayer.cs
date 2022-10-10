@@ -35,28 +35,27 @@ namespace Konane.Game
         public override void NotifyTurnToMove()
         {
             mg.GeneratePlayerMoves(this.boardState, ref legalMoves, this.isBlack);
+            switch (diff)
+            {
+                case GameManager.AIDifficulty.Random:
+                    FindRandomMove();
+                    break;
+                case GameManager.AIDifficulty.MiniMax:
+                    StartMiniMaxSearch();
+                    break;
+            }
         }
 
         public override void NotifyOpeningTurnToMove()
         {
             legalStartMoves = boardUI.GetStartMoves(this.isBlack);
+            FindRandomStartMove(); // Going to always open with random start moves. I suspect it might be too much to ask the computer to search all parameters to see what is optimal
         }
 
         public override void Update()
         {
             //Konane has special start move logic - handle this separately for easy to read code
             //NOTE Sept 19 - consider moving this from Update (called thousands of times) to NotifyTurnToMove() - use a move found flag to gate making the actual move
-            if (moves <= 1)
-                FindRandomStartMove(); // Going to always open with random start moves. I suspect it might be too much to ask the computer to search all parameters to see what is optimal
-            else
-            {
-                switch (diff)
-                {
-                    case GameManager.AIDifficulty.Random:
-                        FindRandomMove();
-                        break;
-                }
-            }
         }
 
         void FindRandomStartMove()
@@ -90,6 +89,14 @@ namespace Konane.Game
             chosenMove = new Move(startPos, targetPos);
             legalMoves.Clear(); //Empty the dictionary
             ChosenMove(chosenMove); //Invoke the action, which is handled by GameManager
+        }
+
+        void StartMiniMaxSearch()
+        {
+            Search search = new(boardState);
+            Move chosenMove = search.StartSearch(isBlack, 10); //For testing limit depth to 10 - this is still going to be a pretty big search unoptimized
+            legalMoves.Clear(); //Empty the dictionary - NOTE THIS IS TEMPORARY - THE MOVES DICTIONARY SHOULD ONLY BE USED FOR RANDOM PLAY!!
+            ChosenMove(chosenMove);
         }
 
         /*void HandleStartMoveSelection(Vector2 mousePos)

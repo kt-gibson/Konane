@@ -58,7 +58,7 @@ namespace Konane
             string startSquare = BoardRepresentation.GetSquareNameFromCoord(move.startPos.fileIdx, move.startPos.rankIdx);
             string targetSquare = BoardRepresentation.GetSquareNameFromCoord(move.targetPos.fileIdx, move.targetPos.rankIdx);
             string color = board[move.startPos.fileIdx, move.startPos.rankIdx];
-            int d; //Distance being travelled
+            int d; //Direction being travelled
 
             //Check whether this is vertical (file letters match)
             if (startSquare[0] == targetSquare[0])
@@ -99,6 +99,79 @@ namespace Konane
             }
         }
 
+        //Need a function to unmake a move - the search algorithm is basically going to unravel all options then roll them back up once a result is found
+        //This function serves as the inverse of MakeMove. Given a move it will revert it by using the end position as an start point and start position as an end point
+        //CURRENTLY BUGGED ON DOUBLE JUMPS BECAUSE IT RESETS EACH SQUARE. INTERVENING SPACES BETWEEN ENEMY PIECES SHOULD BE EMPTY
+        public void UnMakeMove(Move move)
+        {
+            string startSquare = BoardRepresentation.GetSquareNameFromCoord(move.targetPos.fileIdx, move.targetPos.rankIdx);
+            string targetSquare = BoardRepresentation.GetSquareNameFromCoord(move.startPos.fileIdx, move.startPos.rankIdx);
+            string color = board[move.targetPos.fileIdx, move.targetPos.rankIdx];
+            int d; //Direction being travelled
+
+            //Check whether this is vertical (file letters match)
+            if (startSquare[0] == targetSquare[0])
+            {
+                d = move.startPos.rankIdx - move.targetPos.rankIdx; //Note - Positive means moving up, negative means moving down (Every piece until the final position gets "none")
+                //Every move from the start position (inclusive) to the end position (not inclusive) gets set to "none" - the target position gets set to the color found from the start position
+                if (d > 0)
+                {
+                    //Going up
+                    for (int rank = move.targetPos.rankIdx + 1; rank <= move.startPos.rankIdx; rank++)
+                    {
+                        board[move.startPos.fileIdx, rank] = BoardRepresentation.LightSquare(move.startPos.fileIdx, rank) ? "black" : "white";
+
+                        //If the reverted piece's color matches that found by the board representation function, set it to none since intervening spaces must be blank
+                        if (board[move.startPos.fileIdx, rank] == color && rank != move.startPos.rankIdx)
+                            board[move.startPos.fileIdx, rank] = "none";
+                    }
+                }
+                else
+                {
+                    //Going down
+                    for (int rank = move.targetPos.rankIdx - 1; rank >= move.startPos.rankIdx; rank--)
+                    {
+                        board[move.startPos.fileIdx, rank] = BoardRepresentation.LightSquare(move.startPos.fileIdx, rank) ? "black" : "white";
+
+                        //If the reverted piece's color matches that found by the board representation function, set it to none since intervening spaces must be blank
+                        if (board[move.startPos.fileIdx, rank] == color && rank != move.startPos.rankIdx)
+                            board[move.startPos.fileIdx, rank] = "none";
+                    }
+                }
+                board[move.startPos.fileIdx, move.targetPos.rankIdx] = "none"; //Target piece gets removed
+            }
+            // Else - file letters don't match, this is horizontal movement
+            else
+            {
+                d = move.startPos.fileIdx - move.targetPos.fileIdx; //Note - Positive means moving right, negative means moving left (Every piece until the final position gets "none")
+                if (d > 0)
+                {
+                    //Going right
+                    for (int file = move.targetPos.fileIdx + 1; file <= move.startPos.fileIdx; file++)
+                    {
+                        board[file, move.startPos.rankIdx] = BoardRepresentation.LightSquare(file, move.startPos.rankIdx) ? "black" : "white";
+
+                        //If the reverted piece's color matches that found by the board representation function, set it to none since intervening spaces must be blank
+                        if (board[file, move.startPos.rankIdx] == color && file != move.startPos.fileIdx)
+                            board[file, move.startPos.rankIdx] = "none";
+                    }
+                }
+                else
+                {
+                    //Going left
+                    for (int file = move.targetPos.fileIdx - 1; file >= move.startPos.fileIdx; file--)
+                    {
+                        board[file, move.startPos.rankIdx] = BoardRepresentation.LightSquare(file, move.startPos.rankIdx) ? "black" : "white";
+
+                        //If the reverted piece's color matches that found by the board representation function, set it to none since intervening spaces must be blank
+                        if (board[file, move.startPos.rankIdx] == color && file != move.startPos.fileIdx)
+                            board[file, move.startPos.rankIdx] = "none";
+                    }
+                }
+                board[move.targetPos.fileIdx, move.startPos.rankIdx] = "none"; //Target piece gets removed
+            }
+        }
+
         public void PrintBoard()
         {
             string test = "";
@@ -113,51 +186,6 @@ namespace Konane
                 test += "\n";
             }
             Debug.Log("Board State:\n" + test);
-        }
-
-        //TODO: Create a utility method that will evaluate how 'good' a move is for the AI player.
-        //This will likely be a calculation of how many moves maximizing player has vs how many moves minimizing player has
-        //Also need to write a weighting function that will have AI prioritize keeping pieces at the outer edges since those are more advantageous
-
-        //Using the current board configuration, determine how 'good' it is
-        public int UtilityEvaluation(bool isBlack)
-        {
-            /*
-             * First iteration considerations:
-             * 1. Rather than pieces remaining, focus on available moves. Eg - Current player moves - opposing player moves. This will give a sense of what states are better. More moves should be 'good'
-             * 2. Favor maintaining pieces at the edge of the board. Not sure if this should be a weighting factor or adding more points. I fear that if I make it multiplicitave then
-             * it will favor being at the edge of the board too much
-             * 3. Opposing player is out of moves - this is very good.
-             * 4. Evaluating player is out of moves - this is very bad.
-             */
-            //Purely test code. Currently GeneratePlayerMoves takes a boardstate as an arg. Hoping that 'this' keyword will send the current boardstate over. No idea though
-            //Goal is to invoke GeneratePlayerMoves twice and do the relevant comparisons
-            MoveGenerator mg = new();
-            Dictionary<string, List<string>> blackMoves = new();
-            Dictionary<string, List<string>> whiteMoves = new();
-            int moveDiff;
-            
-            //Doing too much here. Just have it return the static evaluation of the board for ONE player only. Have the actual mathy stuff done outside
-            //Eg. UtilityEvaluation(black player) - UtilityEvaluation(white player)
-
-            //Current player is black
-            if (isBlack)
-            {
-                mg.GeneratePlayerMoves(this, ref blackMoves, isBlack); //I have no idea if 'this' is the way to do the solution.
-                mg.GeneratePlayerMoves(this, ref whiteMoves, !isBlack); //I have no idea if 'this' is the way to do the solution.
-                moveDiff = blackMoves.Keys.Count - whiteMoves.Keys.Count;
-            }
-            //Current player is white
-            else
-            {
-                mg.GeneratePlayerMoves(this, ref blackMoves, !isBlack); //I have no idea if 'this' is the way to do the solution.
-                mg.GeneratePlayerMoves(this, ref whiteMoves, isBlack); //I have no idea if 'this' is the way to do the solution.
-                moveDiff = whiteMoves.Keys.Count - blackMoves.Keys.Count;
-            }
-            
-            //Factor in number of edge moves
-
-            return moveDiff;
         }
     }
 }

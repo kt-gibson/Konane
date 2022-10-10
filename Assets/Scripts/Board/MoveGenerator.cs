@@ -56,6 +56,35 @@ namespace Konane.Game
             }
         }
 
+        //Method that will generate a list of moves for the AI to loop through
+        public List<Move> GenerateAIMovesList(BoardState state, bool isBlack)
+        {
+            List<Move> aiMoves = new();
+            Dictionary<string, List<string>> legalMoves = new();
+            Coord startPos;
+            Coord endPos;
+            Move move;
+
+            GeneratePlayerMoves(state, ref legalMoves, isBlack);
+
+            //For each key in the dictionary create a series of possible moves based on each key/value pair
+            foreach(string key in legalMoves.Keys)
+            {
+                BoardRepresentation.GetIdxFromSquareName(out int startFile, out int startRank, key); //Start pos
+                //Iterate through each value for a given key and append the move to the aiMoves list
+                for (int i = 0; i < legalMoves[key].Count; i++)
+                {
+                    BoardRepresentation.GetIdxFromSquareName(out int endFile, out int endRank, legalMoves[key][i]); //End pos
+                    startPos = new Coord(startRank, startFile);
+                    endPos = new Coord(endRank, endFile);
+                    move = new Move(startPos, endPos);
+                    aiMoves.Add(move);
+                }
+            }
+
+            return aiMoves;
+        }
+
         public bool HasLegalMoves(BoardState state, bool isBlack)
         {
             moves.Clear();
@@ -219,5 +248,40 @@ namespace Konane.Game
         }
 
         // Going to need a generate AI moves method that is very similar to player moves but bases itself on entire board states
+        //TODO: Create a utility method that will evaluate how 'good' a move is for the AI player.
+        //This will likely be a calculation of how many moves maximizing player has vs how many moves minimizing player has
+        //Also need to write a weighting function that will have AI prioritize keeping pieces at the outer edges since those are more advantageous
+
+        //Using the current board configuration, determine how 'good' it is
+        public int UtilityEvaluation(BoardState board, bool isBlack)
+        {
+            /*
+             * First iteration considerations:
+             * 1. Rather than pieces remaining, focus on available moves. Eg - Current player moves - opposing player moves. This will give a sense of what states are better. More moves should be 'good'
+             * 2. Favor maintaining pieces at the edge of the board. Not sure if this should be a weighting factor or adding more points. I fear that if I make it multiplicitave then
+             * it will favor being at the edge of the board too much
+             * 3. Opposing player is out of moves - this is very good.
+             * 4. Evaluating player is out of moves - this is very bad.
+             */
+            //Purely test code. Currently GeneratePlayerMoves takes a boardstate as an arg. Hoping that 'this' keyword will send the current boardstate over. No idea though
+            //Goal is to invoke GeneratePlayerMoves twice and do the relevant comparisons
+            //MoveGenerator mg = new();
+            Dictionary<string, List<string>> moves = new();
+            
+
+            //Doing too much here. Just have it return the static evaluation of the board for ONE player only. Have the actual mathy stuff done outside
+            //Eg. UtilityEvaluation(black player) - UtilityEvaluation(white player)
+
+            //Current player is black
+            if (isBlack)
+                GeneratePlayerMoves(board, ref moves, isBlack);
+            //Current player is white
+            else
+                GeneratePlayerMoves(board, ref moves, !isBlack);
+            
+            //TODO: Factor in number of edge moves
+
+            return moves.Keys.Count;
+        }
     }
 }

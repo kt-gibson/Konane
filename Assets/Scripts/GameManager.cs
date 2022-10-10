@@ -37,7 +37,8 @@ namespace Konane.Game
 
         public enum AIDifficulty //Consider changing this to a scriptable object. More customizable
         {
-            Random
+            Random,
+            MiniMax
         }
         public AIDifficulty diff;
         public enum PlayerType
@@ -68,6 +69,7 @@ namespace Konane.Game
             if (loadTestBoard)
             {
                 blackToMove = blackMove;
+                moveCount = 5;
                 boardUI.LoadBoard(activeBoard, searchBoard, testBoard);
             }
 

@@ -20,13 +20,14 @@ namespace Konane.Game
         BoardState boardState;
         Camera cam;
 
-        int moves = 1;
+        int moves = 2; //Temp for testing - set back to 1
         List<string> legalStartMoves;
         Dictionary<string, List<string>> legalMoves = new();
         MoveGenerator mg = new();
         string startPosition;
         //string targetPosition;
         bool isBlack;
+        //Move lastMove; //Used for testing revert move.
         /*
          * Need the following variables
          * 1. selected square coordinate
@@ -76,10 +77,8 @@ namespace Konane.Game
 
         public override void NotifyTurnToMove()
         {
-            currState = InputState.None; //This is here so that I can prevent multiple HandleInput calls in the update method. I'll set currState to something else and gate based off that
-            // if moves >= 2 then do the dictionary legal moves method
+            currState = InputState.None;
             mg.GeneratePlayerMoves(this.boardState, ref legalMoves, this.isBlack);
-                
         }
 
         public override void NotifyOpeningTurnToMove()
@@ -90,9 +89,16 @@ namespace Konane.Game
 
         public override void Update()
         {
+            //Temp test logic for undoing a move
+            /*if (Input.GetKeyDown(KeyCode.Space))
+            {
+                boardState.UnMakeMove(lastMove);
+                boardUI.UpdateBoard(boardState);
+            }*/
+
             //Konane has special start move logic - handle this separately for easy to read code
             if (moves <= 1)
-                HandleStartInput(); //Note: This is called a lot of times per second - add a flag so it only triggers once per click
+                HandleStartInput();
             else
                 HandleInput();
         }
@@ -238,6 +244,7 @@ namespace Konane.Game
                 startPos = new Coord(startRank, startFile);
                 targetPos = new Coord(rank, file);
                 chosenMove = new Move(startPos, targetPos);
+                //lastMove = chosenMove; //Temp for testing
                 startPosition = null;
                 boardUI.ResetSquareColors();
                 legalMoves.Clear(); //Empty the dictionary
