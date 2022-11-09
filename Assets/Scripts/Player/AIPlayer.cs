@@ -94,8 +94,10 @@ namespace Konane.Game
         void StartMiniMaxSearch()
         {
             Search search = new(boardState);
-            Move chosenMove = search.StartSearch(isBlack, 10); //For testing limit depth to 10 - this is still going to be a pretty big search unoptimized
+            Move chosenMove = search.StartSearch(isBlack, 5); //For testing limit depth to 10 - this is still going to be a pretty big search unoptimized
             legalMoves.Clear(); //Empty the dictionary - NOTE THIS IS TEMPORARY - THE MOVES DICTIONARY SHOULD ONLY BE USED FOR RANDOM PLAY!!
+            Debug.Log("Chosen Move: " + BoardRepresentation.GetSquareNameFromCoord(chosenMove.startPos.fileIdx, chosenMove.startPos.rankIdx) + "-" + BoardRepresentation.GetSquareNameFromCoord(chosenMove.targetPos.fileIdx, chosenMove.targetPos.rankIdx));
+            //boardUI.AnimateAIMove(chosenMove);
             ChosenMove(chosenMove);
         }
 

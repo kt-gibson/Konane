@@ -215,5 +215,32 @@ namespace Konane.Game
         {
             return (isBlack && GetPieceNameAtPos(rank, file) == "black") || (!isBlack && GetPieceNameAtPos(rank, file) == "white");
         }
+
+        public void AnimateUpdateBoard(BoardState state, Move move)
+        {
+            StartCoroutine(AnimateMove(state, move));
+        }
+
+        //Animate start and end positions for the AI - this will simply highlighting the start and end squares, waiting time t, then resetting and making the move
+        IEnumerator AnimateMove(BoardState state, Move move)
+        {
+            //Debug.Log("DEBUG - Inside AnimateAIMove");
+            float t = 0;
+            //Start square color
+            SetSelectedSquareColor(move.startPos.rankIdx, move.startPos.fileIdx);
+
+            //Target square color
+            SetLegalTargetSquareColor(move.targetPos.rankIdx, move.targetPos.fileIdx);
+
+            while (t < 2)
+            {
+                yield return null;
+                t += Time.deltaTime;
+            }
+
+            UpdateBoard(state);
+            //Reset square colors before exiting
+            ResetSquareColors();
+        }
     }
 }

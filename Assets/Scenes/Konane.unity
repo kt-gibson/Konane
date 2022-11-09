@@ -237,16 +237,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   testBoard:
-  - wbwbwbwb
-  - bwbwbwbw
-  - wbwbwbwb
-  - bwbwbwbw
-  - wbwbwbwb
-  - bwbwbwbw
-  - wbwbwbwb
-  - bwbwbwbw
+  - xxxbwxwx
+  - xxxxbxxx
+  - xxxbxxxx
+  - xxxxxxxx
+  - xxxxxxxx
+  - xxxxxxxx
+  - xxxxxxxx
+  - bwxxxxxx
   loadTestBoard: 0
-  diff: 0
+  blackMove: 1
+  diff: 1
   whitePlayerType: 1
   blackPlayerType: 0
 --- !u!4 &1468744054

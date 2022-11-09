@@ -129,7 +129,11 @@ namespace Konane.Game
             activeBoard.MakeMove(move);
             searchBoard.MakeMove(move);
 
-            boardUI.UpdateBoard(activeBoard);
+            //Create a separate updateboard that will animate a move - to be used by AI player
+            if (currentPlayer is AIPlayer)
+                boardUI.AnimateUpdateBoard(activeBoard, move);
+            else
+                boardUI.UpdateBoard(activeBoard);
 
             //activeBoard.PrintBoard();
 
@@ -144,7 +148,7 @@ namespace Konane.Game
 
             boardUI.UpdateBoard(activeBoard);
 
-            activeBoard.PrintBoard();
+            //activeBoard.PrintBoard();
 
             blackToMove = !blackToMove;
             NotifyPlayerToMove();

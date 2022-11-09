@@ -20,7 +20,7 @@ namespace Konane.Game
         BoardState boardState;
         Camera cam;
 
-        int moves = 2; //Temp for testing - set back to 1
+        int moves = 1; //Temp for testing - set back to 1
         List<string> legalStartMoves;
         Dictionary<string, List<string>> legalMoves = new();
         MoveGenerator mg = new();

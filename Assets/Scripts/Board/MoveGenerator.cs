@@ -9,6 +9,7 @@ namespace Konane.Game
     {
         //BoardState state;
         List<string> moves = new();
+        int cumulativeScore;
         //Board boardUI;
 
         //Assume that game over hasn't been reached. GameManager should be checking to see if all moves for a player are exhausted
@@ -143,6 +144,7 @@ namespace Konane.Game
                             //Another jump is possible, add it to the move list
                             moves.Add(BoardRepresentation.GetSquareNameFromCoord(file, rank + (d + 2)));
                             d += 2; //Increment distance d two units. The loop will evaluate if another jump is possible after this one. Max should be 3 jumps on an 8x8 board.
+                            cumulativeScore += 2;
                         }
                         else
                             d += 10; //No multiple jumps, break the loop.
@@ -175,6 +177,7 @@ namespace Konane.Game
                             //Another jump is possible, add it to the move list
                             moves.Add(BoardRepresentation.GetSquareNameFromCoord(file, rank - (d + 2)));
                             d += 2; //Increment distance d two units. The loop will evaluate if another jump is possible after this one. Max should be 3 jumps on an 8x8 board.
+                            cumulativeScore += 2;
                         }
                         else
                             d += 10; //No multiple jumps, break the loop.
@@ -207,6 +210,7 @@ namespace Konane.Game
                             //Another jump is possible, add it to the move list
                             moves.Add(BoardRepresentation.GetSquareNameFromCoord(file - (d + 2), rank));
                             d += 2; //Increment distance d two units. The loop will evaluate if another jump is possible after this one. Max should be 3 jumps on an 8x8 board.
+                            cumulativeScore += 2;
                         }
                         else
                             d += 10; //No multiple jumps, break the loop.
@@ -239,6 +243,7 @@ namespace Konane.Game
                             //Another jump is possible, add it to the move list
                             moves.Add(BoardRepresentation.GetSquareNameFromCoord(file + (d + 2), rank));
                             d += 2; //Increment distance d two units. The loop will evaluate if another jump is possible after this one. Max should be 3 jumps on an 8x8 board.
+                            cumulativeScore += 2;
                         }
                         else
                             d += 10; //No multiple jumps, break the loop.
@@ -267,7 +272,7 @@ namespace Konane.Game
             //Goal is to invoke GeneratePlayerMoves twice and do the relevant comparisons
             //MoveGenerator mg = new();
             Dictionary<string, List<string>> moves = new();
-            
+            cumulativeScore = 0;
 
             //Doing too much here. Just have it return the static evaluation of the board for ONE player only. Have the actual mathy stuff done outside
             //Eg. UtilityEvaluation(black player) - UtilityEvaluation(white player)
@@ -278,10 +283,76 @@ namespace Konane.Game
             //Current player is white
             else
                 GeneratePlayerMoves(board, ref moves, !isBlack);
-            
+
             //TODO: Factor in number of edge moves
 
-            return moves.Keys.Count;
+            //TODO: Factor in number of pieces (minor score bonus)
+
+            //TODO: Factor in number of edge pieces
+
+            //TODO: Factor in whether a capture ends on an edge space
+            //Debug.Log("Cumulative score: " + cumulativeScore + " Move count: " + moves.Keys.Count); 
+            return moves.Keys.Count + cumulativeScore;
+        }
+
+        //This function will take the board and moves list and make a move for each value. It will evaluate the new position and then unmake the move
+        public void SortMoveList(BoardState board, List<Move> moves, bool isBlack)
+        {
+            //Create a new array that matches the length of the move list
+            int[] scores = new int[moves.Count];
+            //board.PrintBoard();
+            for (int i = 0; i < moves.Count; i++)
+            {
+                board.MakeMove(moves[i]);
+                //board.PrintBoard();
+                if (UtilityEvaluation(board, isBlack) - UtilityEvaluation(board, !isBlack) != 0)
+                    Debug.Log("DEBUG - Current player move score: " + UtilityEvaluation(board, isBlack) + " Opposing player move score: " + UtilityEvaluation(board, !isBlack));
+                //Note - Could add in evaluation of win condition scenarios and award different points. Many end state moves will evaluate to an overall zero making sorting difficult
+                //Also, not sure if the simple player moves - opponent moves is workable. There could be lots of states where the math results in similar scores, again making sorting difficult
+                //Perhaps award a multiplier based off of board edge moves available?
+                //**Could add a ref int variable to the peek functions that will keep track of a score. Then factor in various configurations (double jump vs. single jump, edge moves, etc)
+                //Additional note: Check if opposing player is out of moves after current move option is played. If so, award 100 points because when the turns flip current player will win
+                /*
+                 * Possible score configurations:
+                 * Number of possible moves (most important - Konane ends when a player is out of captures) - 1 pt per single capture option
+                 * Multi Capture - 2pt per multi jump - would give a max of +5 (1 for first jump, 2 for next two possible up to max of 3 jumps)
+                 * Number of pieces (more for the current player is better)
+                 * Number of 'edge' pieces - eg. number of pieces situated on the outer rows/columns of the board (these have less capture avenues so potentially more advantageous)
+                 * Whether a capture ends on a 'edge' square - these should be better because they're a capture and slightly protect the piece
+                 * 
+                 */
+                //If after the turn is made the opposing player has no moves, this is a win for current player. Add a large score so this is ordered first
+                //Rationale - If the net score of moves is 0, that can cause paths to be explored that aren't an immediate win rather than simply picking the winning move
+                if (!HasLegalMoves(board, !isBlack)) // Opposing player is out of moves, prioritize this in the sorting order
+                    scores[i] = 100;
+                else
+                    scores[i] = UtilityEvaluation(board, isBlack) - UtilityEvaluation(board, !isBlack); // Assign the overall score for a given move (player moves - opponent moves)
+                board.UnMakeMove(moves[i]);
+                //board.PrintBoard();
+            }
+
+            Sort(moves, scores);
+        }
+
+        //Function that will actually sort the moves list - since objects are passed by reference, modifying it here should change it in the calling method
+        void Sort(List<Move> moves, int[] scores)
+        {
+            //Use a standard sort algorithm to reposition items in the list - order is greatest to least
+            //Using bubble sort - should be fine since move list isn't going to balloon to huge lengths
+            int n = moves.Count;
+
+            //Sort the moves list based on accompanying scores in the array
+            for (int i = 0; i < n - 1; i++)
+                for (int j = 0; j < n - i - 1; j++)
+                    if (scores[j] < scores[j+1])
+                    {
+                        //Swap moves and scores for consistency - can use tuples to accomplish this
+                        (moves[j], moves[j+1]) = (moves[j+1], moves[j]);
+                        (scores[j], scores[j+1]) = (scores[j+1], scores[j]);
+                    }
+
+            //for (int i = 0; i < moves.Count; i++)
+            //    Debug.Log("DEBUG - Move: " + BoardRepresentation.GetSquareNameFromCoord(moves[i].startPos.fileIdx, moves[i].startPos.rankIdx) + "-" + BoardRepresentation.GetSquareNameFromCoord(moves[i].targetPos.fileIdx, moves[i].targetPos.rankIdx) + " Score eval: " + scores[i]);
         }
     }
 }
