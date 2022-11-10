@@ -26,13 +26,14 @@ namespace Konane.Game
         {
             nodeCount = 0;
             //MiniMaxSearch(depth, 0, true, isBlack);//Call minimax as the maximizing player - this opens the search algorithm
-            board.PrintBoard();//Before search board state
+            //board.PrintBoard();//Before search board state
             AlphaBetaSearch(depth, 0, -int.MaxValue, int.MaxValue, isBlack); // Need to use -int.MaxValue because using int.MinValue * -1 will overflow the integer range
-            board.PrintBoard();//After search board state - seems to be undoing moves correctly - just not choosing the right one
+            //board.PrintBoard();//After search board state - seems to be undoing moves correctly - just not choosing the right one
             Debug.Log("Nodes explored: " + nodeCount);
             //bestMove = bestSearchedMove;
-            Debug.Log("DEBUG - BestMove: " + bestSearchedMove.startPos.fileIdx + "" + bestSearchedMove.startPos.rankIdx + "/" + bestSearchedMove.targetPos.fileIdx + "" + bestSearchedMove.targetPos.rankIdx);
-            return bestMove;
+            //Debug.Log("DEBUG - BestMove: " + bestSearchedMove.startPos.fileIdx + "" + bestSearchedMove.startPos.rankIdx + "/" + bestSearchedMove.targetPos.fileIdx + "" + bestSearchedMove.targetPos.rankIdx);
+            //return bestMove;
+            return bestSearchedMove;
         }
 
         //Naive implementation of MiniMax search agent. Enhance with alpha/beta, move ordering, and transposition tables
@@ -104,15 +105,16 @@ namespace Konane.Game
         //Implementation of negamax search framework. Keeping the original minimax framework as a commented historic method
         int AlphaBetaSearch(int depth, int plyFromRoot, int alpha, int beta, bool isBlack)
         {
+            //Debug.Log("DEBUG - Ply from root: " + plyFromRoot + " isBlack: " + isBlack);
             //Debug.Log("DEBUG - PLYFROOM ROOT VAL: " + plyFromRoot + " Alpha: " + alpha + " Beta: " + beta + " Inverted Alpha: " + -alpha + " Inverted beta: " + -beta);
             //Current player is out of moves - this is very bad and a loss - return a terrible score (-100)
             if (!mg.HasLegalMoves(board, isBlack))
                 return -100;
-
+            //Debug.Log("DEBUG1 - Past current player has moves eval");
             //Opposing player is out of moves - this is very good move and a win - return a great score (100)
-            if (!mg.HasLegalMoves(board, !isBlack))
-                return 100;
-
+            /*if (!mg.HasLegalMoves(board, !isBlack))
+                return 100;*/
+            //Debug.Log("DEBUG2 - Past opposing player has moves eval"); //Likely shouldn't do the out of moves validations here. Causing early returns when opposing player has no moves so an actual move isn't chosen.
             //Reached maximum depth - return evaluation of current player's 'score' minus the opposing player's 'score'
             if (depth == 0)
                 return mg.UtilityEvaluation(board, isBlack) - mg.UtilityEvaluation(board, !isBlack);
@@ -132,7 +134,7 @@ namespace Konane.Game
 
                 if (eval > alpha) //New best move found - update the best move value
                 {
-                    Debug.Log("DEBUG - Found a new best move at plyfromroot " + plyFromRoot + " - ");
+                    //Debug.Log("DEBUG - Found a new best move at plyfromroot " + plyFromRoot + " - ");
                     alpha = eval;
                     bestMove = moves[i];//Uncomment reassignment done above before return if not using Transposition table
                     if (plyFromRoot == 0)

@@ -278,11 +278,11 @@ namespace Konane.Game
             //Eg. UtilityEvaluation(black player) - UtilityEvaluation(white player)
 
             //Current player is black
-            if (isBlack)
+            //if (isBlack)
                 GeneratePlayerMoves(board, ref moves, isBlack);
             //Current player is white
-            else
-                GeneratePlayerMoves(board, ref moves, !isBlack);
+            /*else
+                GeneratePlayerMoves(board, ref moves, !isBlack);*/
 
             //TODO: Factor in number of edge moves
 
@@ -292,7 +292,7 @@ namespace Konane.Game
 
             //TODO: Factor in whether a capture ends on an edge space
             //Debug.Log("Cumulative score: " + cumulativeScore + " Move count: " + moves.Keys.Count); 
-            return moves.Keys.Count + cumulativeScore;
+            return moves.Keys.Count + cumulativeScore; //This isn't really factoring in multi jumps (treats them as 1-3 'moves' but doesn't weight them any different)
         }
 
         //This function will take the board and moves list and make a move for each value. It will evaluate the new position and then unmake the move
@@ -303,10 +303,11 @@ namespace Konane.Game
             //board.PrintBoard();
             for (int i = 0; i < moves.Count; i++)
             {
+                //board.PrintBoard();
                 board.MakeMove(moves[i]);
                 //board.PrintBoard();
-                if (UtilityEvaluation(board, isBlack) - UtilityEvaluation(board, !isBlack) != 0)
-                    Debug.Log("DEBUG - Current player move score: " + UtilityEvaluation(board, isBlack) + " Opposing player move score: " + UtilityEvaluation(board, !isBlack));
+                //if (UtilityEvaluation(board, isBlack) - UtilityEvaluation(board, !isBlack) != 0)
+                //    Debug.Log("DEBUG - Current player move score: " + UtilityEvaluation(board, isBlack) + " Opposing player move score: " + UtilityEvaluation(board, !isBlack));
                 //Note - Could add in evaluation of win condition scenarios and award different points. Many end state moves will evaluate to an overall zero making sorting difficult
                 //Also, not sure if the simple player moves - opponent moves is workable. There could be lots of states where the math results in similar scores, again making sorting difficult
                 //Perhaps award a multiplier based off of board edge moves available?
@@ -330,7 +331,7 @@ namespace Konane.Game
                 board.UnMakeMove(moves[i]);
                 //board.PrintBoard();
             }
-
+            //board.PrintBoard();
             Sort(moves, scores);
         }
 
@@ -340,6 +341,14 @@ namespace Konane.Game
             //Use a standard sort algorithm to reposition items in the list - order is greatest to least
             //Using bubble sort - should be fine since move list isn't going to balloon to huge lengths
             int n = moves.Count;
+            string debug = "";
+
+            for (int i = 0; i < n; i++)
+            {
+                debug += "Move: " + BoardRepresentation.GetSquareNameFromCoord(moves[i].startPos.fileIdx, moves[i].startPos.rankIdx) + "->" +
+                    BoardRepresentation.GetSquareNameFromCoord(moves[i].targetPos.fileIdx, moves[i].targetPos.rankIdx) + " Eval: " + scores[i] + "; ";
+            }
+            Debug.Log("DEBUG ORDERING BEFORE - " + debug);
 
             //Sort the moves list based on accompanying scores in the array
             for (int i = 0; i < n - 1; i++)
@@ -351,6 +360,13 @@ namespace Konane.Game
                         (scores[j], scores[j+1]) = (scores[j+1], scores[j]);
                     }
 
+            debug = "";
+            for (int i = 0; i < n; i++)
+            {
+                debug += "Move: " + BoardRepresentation.GetSquareNameFromCoord(moves[i].startPos.fileIdx, moves[i].startPos.rankIdx) + "->" +
+                    BoardRepresentation.GetSquareNameFromCoord(moves[i].targetPos.fileIdx, moves[i].targetPos.rankIdx) + " Eval: " + scores[i] + "; ";
+            }
+            Debug.Log("DEBUG ORDERING AFTER - " + debug);
             //for (int i = 0; i < moves.Count; i++)
             //    Debug.Log("DEBUG - Move: " + BoardRepresentation.GetSquareNameFromCoord(moves[i].startPos.fileIdx, moves[i].startPos.rankIdx) + "-" + BoardRepresentation.GetSquareNameFromCoord(moves[i].targetPos.fileIdx, moves[i].targetPos.rankIdx) + " Score eval: " + scores[i]);
         }
