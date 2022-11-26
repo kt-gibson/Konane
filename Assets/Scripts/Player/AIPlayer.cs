@@ -34,10 +34,10 @@ namespace Konane.Game
 
         public override void NotifyTurnToMove()
         {
-            mg.GeneratePlayerMoves(this.boardState, ref legalMoves, this.isBlack);
             switch (diff)
             {
                 case GameManager.AIDifficulty.Random:
+                    mg.GeneratePlayerMoves(this.boardState, ref legalMoves, this.isBlack); //Moved from outisde switch - this shouldn't be called if using minimax
                     FindRandomMove();
                     break;
                 case GameManager.AIDifficulty.MiniMax:

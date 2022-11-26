@@ -57,6 +57,69 @@ namespace Konane.Game
             }
         }
 
+        //This function will search for both current and opposing player moves. This halves the looping being done for a given utility evaluation
+        void GenerateAISearchMoves(BoardState state, ref Dictionary<string, List<string>> curPlayerMoves, ref Dictionary<string, List<string>> oppPlayerMoves, string currColor, string oppColor)
+        {
+            bool isBlack;
+            for (int rank = 0; rank < 8; rank++)
+            {
+                for (int file = 0; file < 8; file++)
+                {
+                    if (state.board[file, rank] == currColor)
+                    {
+                        moves.Clear();
+                        isBlack = currColor == "black";
+                        //Start with the current player moves. Do the normal process, append to the dictionary, then repeat for the opposing player
+                        //Even though this is basically duplicating code, it's faster than doing another 64 iterations for a separate player. This houses searches for moves inside one double loop
+                        //Peek up
+                        PeekUp(state, rank, file, isBlack);
+
+                        //Peek down
+                        PeekDown(state, rank, file, isBlack);
+
+                        //Peek left
+                        PeekLeft(state, rank, file, isBlack);
+
+                        //Peek right
+                        PeekRight(state, rank, file, isBlack);
+
+                        //If any moves exist, create a key/value pair for this square
+                        if (moves?.Count > 0)
+                        {
+                            curPlayerMoves.Add(BoardRepresentation.GetSquareNameFromCoord(file, rank), new List<string>(moves)); //Clone the list to avoid shared memory location issues.
+                            moves.Clear(); //Empty list after creating the dictionary entry for reuse on next iteration.
+                        }
+                    }
+                    // if square = currPlayerColor then - use terniary to set isblack flag -> else if square = oppPlayerColor then
+                    //moves.Clear();
+
+                    else if (state.board[file, rank] == oppColor)
+                    {
+                        moves.Clear();
+                        isBlack = oppColor == "black";
+
+                        PeekUp(state, rank, file, isBlack);
+
+                        //Peek down
+                        PeekDown(state, rank, file, isBlack);
+
+                        //Peek left
+                        PeekLeft(state, rank, file, isBlack);
+
+                        //Peek right
+                        PeekRight(state, rank, file, isBlack);
+
+                        //If any moves exist, create a key/value pair for this square
+                        if (moves?.Count > 0)
+                        {
+                            oppPlayerMoves.Add(BoardRepresentation.GetSquareNameFromCoord(file, rank), new List<string>(moves)); //Clone the list to avoid shared memory location issues.
+                            moves.Clear(); //Empty list after creating the dictionary entry for reuse on next iteration.
+                        }
+                    }
+                }
+            }
+        }
+
         //Method that will generate a list of moves for the AI to loop through
         public List<Move> GenerateAIMovesList(BoardState state, bool isBlack)
         {
@@ -252,47 +315,83 @@ namespace Konane.Game
             }
         }
 
-        // Going to need a generate AI moves method that is very similar to player moves but bases itself on entire board states
-        //TODO: Create a utility method that will evaluate how 'good' a move is for the AI player.
-        //This will likely be a calculation of how many moves maximizing player has vs how many moves minimizing player has
-        //Also need to write a weighting function that will have AI prioritize keeping pieces at the outer edges since those are more advantageous
+        int NumEdgeMoves(Dictionary<string, List<string>> moves)
+        {
+            //Get all the moves and check if the first part of the square string is a or h or the second part of the string is 1 or 8 (I'd say start with landing on any of these possible squares)
+            //Do 1.5f for an edge move and floor the end value for return - An edge move is likely to be better overall
+            //Dictionary<string, List<string>> moves = new();
+            //GeneratePlayerMoves(board, ref moves, isBlack);
+            float eval = 0;
+
+            foreach (string key in moves.Keys)
+            {
+                foreach (string val in moves[key])
+                {
+                    //Two scenarios - 1. Start and end on edge - this is an excellent move - 2. End on an edge - this is good
+                    if ((key[0] == 'a' || key[0] == 'h' || key[1] == '1' || key[1] == '8') && (val[0] == 'a' || val[0] == 'h' || val[1] == '1' || val[1] == '8'))
+                        eval += 1.5f;
+                    //Start position isn't on an edge but ends on one
+                    else if ((key[0] != 'a' && key[0] != 'h' && key[1] != '1' && key[1] != '8') && (val[0] == 'a' || val[0] == 'h' || val[1] == '1' || val[1] == '8'))
+                        eval += 1.0f;
+                }
+            }
+
+            Debug.Log("DEBUG - NumEdgeMoves - Returning eval: " + eval);
+            return (int)eval;
+        }
+
+        //Change this to have one 0-8 loop - this can evaluate each rank/file for edge pieces without needing 64 iterations
+        int NumEdgePieces(BoardState board, bool isBlack)
+        {
+            float eval = 0;
+            string color = isBlack ? "black" : "white";
+            string square;
+
+            //Loop through the board and check for pieces matching player color - then check whether the current coordinate is an edge square. If so, increment eval
+            for (int rank = 0; rank < 8; rank++)
+            {
+                for (int file = 0; file < 8; file++)
+                {
+                    if (board.board[file, rank] == color)
+                    {
+                        square = BoardRepresentation.GetSquareNameFromCoord(file, rank);
+                        if (square[0] == 'a' || square[0] == 'h' || square[1] == '1' || square[1] == '8')
+                            eval += 0.5f;
+                    }
+                }
+            }
+
+            Debug.Log("DEBUG - NumEdgePieces - Returning eval: " + eval);
+            return (int)eval;
+        }
+
+        //Take a move and evaluate if the target position is an edge square - return a bonus score of 1 if so and 0 otherwise (tweak score adjustment as necessary)
+        int MoveLandsOnEdge(Move move)
+        {
+            string targetSquare = BoardRepresentation.GetSquareNameFromCoord(move.targetPos.fileIdx, move.targetPos.rankIdx);
+            if (targetSquare[0] == 'a' || targetSquare[0] == 'h' || targetSquare[1] == '1' || targetSquare[1] == '8')
+                return 1;
+
+            return 0;
+        }
 
         //Using the current board configuration, determine how 'good' it is
         public int UtilityEvaluation(BoardState board, bool isBlack)
         {
-            /*
-             * First iteration considerations:
-             * 1. Rather than pieces remaining, focus on available moves. Eg - Current player moves - opposing player moves. This will give a sense of what states are better. More moves should be 'good'
-             * 2. Favor maintaining pieces at the edge of the board. Not sure if this should be a weighting factor or adding more points. I fear that if I make it multiplicitave then
-             * it will favor being at the edge of the board too much
-             * 3. Opposing player is out of moves - this is very good.
-             * 4. Evaluating player is out of moves - this is very bad.
-             */
-            //Purely test code. Currently GeneratePlayerMoves takes a boardstate as an arg. Hoping that 'this' keyword will send the current boardstate over. No idea though
-            //Goal is to invoke GeneratePlayerMoves twice and do the relevant comparisons
-            //MoveGenerator mg = new();
             Dictionary<string, List<string>> moves = new();
             cumulativeScore = 0;
 
-            //Doing too much here. Just have it return the static evaluation of the board for ONE player only. Have the actual mathy stuff done outside
-            //Eg. UtilityEvaluation(black player) - UtilityEvaluation(white player)
-
-            //Current player is black
-            //if (isBlack)
-                GeneratePlayerMoves(board, ref moves, isBlack);
-            //Current player is white
-            /*else
-                GeneratePlayerMoves(board, ref moves, !isBlack);*/
+            GeneratePlayerMoves(board, ref moves, isBlack); //Nov 10 NOTE - Optimize this by creating a new function that will generate moves for both players - this will have the number of loops
+            //Currently I'm doing millions of bloated loops covering the same stuff. Need to optimize this so the move ordering isn't eating a shitload of time
 
             //TODO: Factor in number of edge moves
-
-            //TODO: Factor in number of pieces (minor score bonus)
+            cumulativeScore += NumEdgeMoves(moves);
 
             //TODO: Factor in number of edge pieces
+            //cumulativeScore += NumEdgePieces(board, isBlack);
 
-            //TODO: Factor in whether a capture ends on an edge space
             //Debug.Log("Cumulative score: " + cumulativeScore + " Move count: " + moves.Keys.Count); 
-            return moves.Keys.Count + cumulativeScore; //This isn't really factoring in multi jumps (treats them as 1-3 'moves' but doesn't weight them any different)
+            return moves.Keys.Count + cumulativeScore; //This isn't really factoring in multi jumps (treats them as 1-3 'moves' but doesn't weight them any different) - could make an eval function specifically for multi jumps
         }
 
         //This function will take the board and moves list and make a move for each value. It will evaluate the new position and then unmake the move
@@ -308,26 +407,16 @@ namespace Konane.Game
                 //board.PrintBoard();
                 //if (UtilityEvaluation(board, isBlack) - UtilityEvaluation(board, !isBlack) != 0)
                 //    Debug.Log("DEBUG - Current player move score: " + UtilityEvaluation(board, isBlack) + " Opposing player move score: " + UtilityEvaluation(board, !isBlack));
-                //Note - Could add in evaluation of win condition scenarios and award different points. Many end state moves will evaluate to an overall zero making sorting difficult
-                //Also, not sure if the simple player moves - opponent moves is workable. There could be lots of states where the math results in similar scores, again making sorting difficult
-                //Perhaps award a multiplier based off of board edge moves available?
-                //**Could add a ref int variable to the peek functions that will keep track of a score. Then factor in various configurations (double jump vs. single jump, edge moves, etc)
-                //Additional note: Check if opposing player is out of moves after current move option is played. If so, award 100 points because when the turns flip current player will win
-                /*
-                 * Possible score configurations:
-                 * Number of possible moves (most important - Konane ends when a player is out of captures) - 1 pt per single capture option
-                 * Multi Capture - 2pt per multi jump - would give a max of +5 (1 for first jump, 2 for next two possible up to max of 3 jumps)
-                 * Number of pieces (more for the current player is better)
-                 * Number of 'edge' pieces - eg. number of pieces situated on the outer rows/columns of the board (these have less capture avenues so potentially more advantageous)
-                 * Whether a capture ends on a 'edge' square - these should be better because they're a capture and slightly protect the piece
-                 * 
-                 */
                 //If after the turn is made the opposing player has no moves, this is a win for current player. Add a large score so this is ordered first
                 //Rationale - If the net score of moves is 0, that can cause paths to be explored that aren't an immediate win rather than simply picking the winning move
                 if (!HasLegalMoves(board, !isBlack)) // Opposing player is out of moves, prioritize this in the sorting order
                     scores[i] = 100;
                 else
-                    scores[i] = UtilityEvaluation(board, isBlack) - UtilityEvaluation(board, !isBlack); // Assign the overall score for a given move (player moves - opponent moves)
+                    //Make a separate UtilityEval function that takes different parameters to cut down on the needless move generation
+                    //Could also do a movegenerator function that increments based on square color - eg. if player not black on look at dark squares - this should halve the iterations needed
+                    //could do a simple mod function that would determine what square to start on rank % 2 == 0 or 1, which is also the square I'd want to start on
+                    //if !black -> i = rank % 2 - if black -> i = rank % 2 == 0 ? (rank % 2) + 1 : (rank % 2) - 1
+                    scores[i] = (UtilityEvaluation(board, isBlack) + MoveLandsOnEdge(moves[i])) - UtilityEvaluation(board, !isBlack); // Assign the overall score for a given move (player moves - opponent moves)
                 board.UnMakeMove(moves[i]);
                 //board.PrintBoard();
             }
@@ -343,12 +432,12 @@ namespace Konane.Game
             int n = moves.Count;
             string debug = "";
 
-            for (int i = 0; i < n; i++)
+            /*for (int i = 0; i < n; i++)
             {
                 debug += "Move: " + BoardRepresentation.GetSquareNameFromCoord(moves[i].startPos.fileIdx, moves[i].startPos.rankIdx) + "->" +
                     BoardRepresentation.GetSquareNameFromCoord(moves[i].targetPos.fileIdx, moves[i].targetPos.rankIdx) + " Eval: " + scores[i] + "; ";
             }
-            Debug.Log("DEBUG ORDERING BEFORE - " + debug);
+            Debug.Log("DEBUG ORDERING BEFORE - " + debug);*/
 
             //Sort the moves list based on accompanying scores in the array
             for (int i = 0; i < n - 1; i++)
@@ -360,13 +449,13 @@ namespace Konane.Game
                         (scores[j], scores[j+1]) = (scores[j+1], scores[j]);
                     }
 
-            debug = "";
+            /*debug = "";
             for (int i = 0; i < n; i++)
             {
                 debug += "Move: " + BoardRepresentation.GetSquareNameFromCoord(moves[i].startPos.fileIdx, moves[i].startPos.rankIdx) + "->" +
                     BoardRepresentation.GetSquareNameFromCoord(moves[i].targetPos.fileIdx, moves[i].targetPos.rankIdx) + " Eval: " + scores[i] + "; ";
             }
-            Debug.Log("DEBUG ORDERING AFTER - " + debug);
+            Debug.Log("DEBUG ORDERING AFTER - " + debug);*/
             //for (int i = 0; i < moves.Count; i++)
             //    Debug.Log("DEBUG - Move: " + BoardRepresentation.GetSquareNameFromCoord(moves[i].startPos.fileIdx, moves[i].startPos.rankIdx) + "-" + BoardRepresentation.GetSquareNameFromCoord(moves[i].targetPos.fileIdx, moves[i].targetPos.rankIdx) + " Score eval: " + scores[i]);
         }

@@ -37,7 +37,7 @@ namespace Konane.Game
         }
 
         //Naive implementation of MiniMax search agent. Enhance with alpha/beta, move ordering, and transposition tables
-        int MiniMaxSearch(int depth, int plyFromRoot, bool maximizingPlayer, bool isBlack)
+        /*int MiniMaxSearch(int depth, int plyFromRoot, bool maximizingPlayer, bool isBlack)
         {
             //Current player is out of moves - this is very bad and a loss - return a terrible score (-100)
             if (!mg.HasLegalMoves(board, isBlack))
@@ -62,14 +62,6 @@ namespace Konane.Game
                 int maxEval = int.MinValue;
                 List<Move> moves = mg.GenerateAIMovesList(board, isBlack);
                 //For each possible move in the list of moves set an eval = MiniMaxSearch
-
-                /* 1. Using the board - get all possible moves for a state and loop through them
-                 * 
-                 * foreach move in allMoves loop -> inside this loop do the following: a. Make the move - b. Feed the new board state into minimax - c. Unmake move
-                 * maxEval = max(maxEval, minimaxsearch(depth - 1, !maximizingPlayer, !isBlack)) -> Note: Will need a reference to player perspective on each turn
-                 * unmake the move
-                 * 
-                 */
                 for (int i = 0; i < moves.Count; i++)
                 {
                     board.MakeMove(moves[i]);
@@ -100,7 +92,7 @@ namespace Konane.Game
 
                 return minEval;
             }
-        }
+        }*/
 
         //Implementation of negamax search framework. Keeping the original minimax framework as a commented historic method
         int AlphaBetaSearch(int depth, int plyFromRoot, int alpha, int beta, bool isBlack)
