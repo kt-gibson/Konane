@@ -8,25 +8,6 @@ public class BoardRepresentation : MonoBehaviour
     public const string fileNames = "abcdefgh";
     public const string rankNames = "12345678";
 
-	//64 unit representation of the board space - a1 = idx 0, b1 = idx 1, etc
-	public const int a1 = 0;
-	public const int b1 = 1;
-	public const int c1 = 2;
-	public const int d1 = 3;
-	public const int e1 = 4;
-	public const int f1 = 5;
-	public const int g1 = 6;
-	public const int h1 = 7;
-
-	public const int a8 = 56;
-	public const int b8 = 57;
-	public const int c8 = 58;
-	public const int d8 = 59;
-	public const int e8 = 60;
-	public const int f8 = 61;
-	public const int g8 = 62;
-	public const int h8 = 63;
-
 	//Assign a square name given a file / rank set of indices.
 	public static string GetSquareNameFromCoord(int fileIdx, int rankIdx)
     {

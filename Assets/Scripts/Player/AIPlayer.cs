@@ -1,19 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
-//using static Konane.Game.HumanPlayer;
 
 namespace Konane.Game
 {
     public class AIPlayer : Player
     {
-        /*
-         * Initial todo
-         * 1. Have the AI player randomly pick one of the four legal moves it has for its first two opening moves
-         * This will require game manager to correctly shuffle the moves back and forth between human and AI players
-         * This step is very important to get the first instantiation of the core game loop working. Once this aspect is complete can start fleshing out the AIs search algorithm
-         */
         Board boardUI;
         BoardState boardState;
         int moves = 1;
@@ -22,25 +16,37 @@ namespace Konane.Game
         bool isBlack;
         MoveGenerator mg = new();
         string startPosition;
-        GameManager.AIDifficulty diff;
+        Options options;
+        int searchDepth;
 
-        public AIPlayer(BoardState boardState, bool isBlack, GameManager.AIDifficulty diff)
+        public AIPlayer(BoardState boardState, bool isBlack)
         {
             this.boardState = boardState;
             this.isBlack = isBlack;
             boardUI = GameObject.FindObjectOfType<Board>();
-            this.diff = diff;
+            options = GameObject.FindObjectOfType<Options>();
         }
 
         public override void NotifyTurnToMove()
         {
-            switch (diff)
+            switch (options.GetDifficulty())
             {
-                case GameManager.AIDifficulty.Random:
+                // Easy - AI plays at random
+                case Options.Difficulty.Easy:
+                    //Debug.Log("DEBUG - Playing random moves");
                     mg.GeneratePlayerMoves(this.boardState, ref legalMoves, this.isBlack); //Moved from outisde switch - this shouldn't be called if using minimax
                     FindRandomMove();
                     break;
-                case GameManager.AIDifficulty.MiniMax:
+                //Intermediate - Depth limit of 3 - 5
+                case Options.Difficulty.Intermediate:
+                    //Debug.Log("DEBUG - Playing intermediate moves");
+                    searchDepth = 3;
+                    StartMiniMaxSearch();
+                    break;
+                //Difficult - Depth limit of 5 - 7
+                case Options.Difficulty.Difficult:
+                    //Debug.Log("DEBUG - Playing hard moves");
+                    searchDepth = 5;
                     StartMiniMaxSearch();
                     break;
             }
@@ -54,8 +60,7 @@ namespace Konane.Game
 
         public override void Update()
         {
-            //Konane has special start move logic - handle this separately for easy to read code
-            //NOTE Sept 19 - consider moving this from Update (called thousands of times) to NotifyTurnToMove() - use a move found flag to gate making the actual move
+            
         }
 
         void FindRandomStartMove()
@@ -94,32 +99,10 @@ namespace Konane.Game
         void StartMiniMaxSearch()
         {
             Search search = new(boardState);
-            Move chosenMove = search.StartSearch(isBlack, 5); //For testing limit depth to 10 - this is still going to be a pretty big search unoptimized
-            legalMoves.Clear(); //Empty the dictionary - NOTE THIS IS TEMPORARY - THE MOVES DICTIONARY SHOULD ONLY BE USED FOR RANDOM PLAY!!
-            Debug.Log("Chosen Move: " + BoardRepresentation.GetSquareNameFromCoord(chosenMove.startPos.fileIdx, chosenMove.startPos.rankIdx) + "-" + BoardRepresentation.GetSquareNameFromCoord(chosenMove.targetPos.fileIdx, chosenMove.targetPos.rankIdx));
-            //boardUI.AnimateAIMove(chosenMove);
-            ChosenMove(chosenMove);
+            Move chosenMove = search.StartSearch(isBlack, searchDepth);
+            //legalMoves.Clear(); //Empty the dictionary - NOTE THIS IS TEMPORARY - THE MOVES DICTIONARY SHOULD ONLY BE USED FOR RANDOM PLAY!!
+            //Debug.Log("Chosen Move: " + BoardRepresentation.GetSquareNameFromCoord(chosenMove.startPos.fileIdx, chosenMove.startPos.rankIdx) + "-" + BoardRepresentation.GetSquareNameFromCoord(chosenMove.targetPos.fileIdx, chosenMove.targetPos.rankIdx));
+            ChosenMove(chosenMove); //Invoke the action, which is handled by GameManager
         }
-
-        /*void HandleStartMoveSelection(Vector2 mousePos)
-        {
-            int rank = (int)(mousePos.y + 4); //rank - y
-            int file = (int)(mousePos.x + 4); //file - x
-            Coord chosenMove;
-
-            if (IsValidStartSelection(rank, file))
-            {
-                if (startPosition == boardUI.GetSquareNameAtPos(rank, file))
-                {
-                    //Update the internal move state and reset the board UI colors
-                    moves += 1;
-                    currState = InputState.MoveSelected;
-                    chosenMove = new Coord(rank, file);
-                    startPosition = null;
-                    boardUI.ResetSquareColors();
-                    ChosenStartMove(chosenMove); //Invoke the action, which is handled by GameManager
-                }
-            }
-        }*/
     }
 }

@@ -21,12 +21,8 @@ public class Options : MonoBehaviour
     private PlayerColor playerColor;
     static Options instance;
 
-    //On first creation of object set defaults to easy and player black. These can be updated via options manager. Awake means this will only ever occur once.
-    //Should this options class be a prefab?
     public void Awake()
     {
-        //difficulty = Difficulty.Easy;
-        //playerColor = PlayerColor.Black;
         ManageSingleton();
     }
 

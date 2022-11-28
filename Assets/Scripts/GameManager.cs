@@ -1,46 +1,31 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Konane.Game
 {
     public class GameManager : MonoBehaviour
     {
-        /*
-         * High level implementation requirements
-         * --------------------------------------
-         * 1. Must set up board using Board class - this will create the UI and game objects
-         * 2. Must assign the pieces to a given player (black/white)
-         * 3. Need to determine whether Human or AI player is a given color (will be done through an options menu but can serialize a field for now)
-         * 4. Store both current board state and current search board state (used by AI) - board state becomes search board state result after AI picks a move
-         * 
-         * 
-         * Current Goal: Implement basic player movement (click to move)
-         * Subset - Program the opening 4 moves (2 pieces removed for black / 2 pieces removed for white)
-         *  - Need to add in some flags to either the player or board classes that will handle determining opening moves allowed
-         *  - Also need a move class that will validate moves - this would factor in the first 4 moves
-         *  - This is the point I should probably start developing my own frameworks - I've got the basics from Lague, now need to form my own class structures
-         */
         Player playerBlack;
         Player playerWhite;
         Player currentPlayer;
         BoardState activeBoard;
         BoardState searchBoard;
         Board boardUI;
+        Options options;
+        public Button playAgain;
+        public Button mainMenu;
+        public TextMeshProUGUI winner;
         bool blackToMove;
-        int moveCount;
+        int moveCount; //Used for debugging purposes
 
         //Test board will look inverted in the inspector because the board loads (0,0) as bottom left where the array will see (0,0) as top left
         public string[] testBoard = new string[8]; //Used to load a custom board state. Will be needed for minimax testing on simple configurations (w/b are pieces, x is empty space)
-        public bool loadTestBoard = false;
-        public bool blackMove = true;
+        public bool loadTestBoard = false; //Used for debugging purposes
+        public bool blackMove = true; //Used for debugging purposes
 
-        public enum AIDifficulty //Consider changing this to a scriptable object. More customizable
-        {
-            Random,
-            MiniMax
-        }
-        public AIDifficulty diff;
         public enum PlayerType
         {
             Human,
@@ -52,8 +37,8 @@ namespace Konane.Game
             GameOver
         }
         GameState gs;
-        public PlayerType whitePlayerType;
-        public PlayerType blackPlayerType;
+        public PlayerType whitePlayerType; //change from public to private
+        public PlayerType blackPlayerType; //change from public to private
 
         MoveGenerator mg = new();
 
@@ -62,9 +47,15 @@ namespace Konane.Game
             activeBoard = new BoardState();
             searchBoard = new BoardState();
             boardUI = FindObjectOfType<Board>();
+            options = FindObjectOfType<Options>();
             boardUI.CreateBoard(activeBoard, searchBoard);
             blackToMove = true;
             moveCount = 0;
+
+            //Hide the buttons and text
+            winner.text = "";
+            playAgain.gameObject.SetActive(false);
+            mainMenu.gameObject.SetActive(false);
 
             if (loadTestBoard)
             {
@@ -72,11 +63,46 @@ namespace Konane.Game
                 moveCount = 5;
                 boardUI.LoadBoard(activeBoard, searchBoard, testBoard);
             }
+            whitePlayerType = options.GetPlayerColor() == Options.PlayerColor.White ? PlayerType.Human : PlayerType.AI;
+            blackPlayerType = options.GetPlayerColor() == Options.PlayerColor.Black ? PlayerType.Human : PlayerType.AI;
+
+            //Test block
+            //DumpOptimizedBoardMoves(true);
+            //DumpOptimizedBoardMoves(false);
 
             NewGame(whitePlayerType, blackPlayerType);
         }
 
-        // Update is called once per frame
+        //Temp test to make sure my math is correct - this is testing halving the iterations done when generating moves.
+        /*void DumpOptimizedBoardMoves(bool playerBlack)
+        {
+            if (playerBlack)
+            {
+                Debug.Log("DUMPING BLACK SQUARES");
+                for (int rank = 0; rank < 8; rank++)
+                {
+                    //int idx = rank % 2 == 0 ? (rank % 2) + 1 : (rank % 2) - 1;
+                    for (int file = rank % 2 == 0 ? (rank % 2) + 1 : (rank % 2) - 1; file < 8; file += 2)
+                    {
+                        if (activeBoard.board[file, rank] == "black")
+                            Debug.Log("File: " + file + "; Rank: " + rank + "; Piece: " + activeBoard.board[file, rank]);
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log("DUMPING WHITE SQUARES");
+                for (int rank = 0; rank < 8; rank++)
+                {
+                    for (int file = rank % 2; file < 8; file += 2)
+                    {
+                        if (activeBoard.board[file, rank] == "white")
+                            Debug.Log("File: " + file + "; Rank: " + rank + "; Piece: " + activeBoard.board[file, rank]);
+                    }
+                }
+            }
+        }*/
+
         void Update()
         {
             if (gs == GameState.Playing)
@@ -85,7 +111,6 @@ namespace Konane.Game
 
         void NewGame(PlayerType whitePlayerType, PlayerType blackPlayerType)
         {
-            //Consider telling the board to reset positions and square colors - might just reload the scene though so may not matter
             CreatePlayer(ref playerWhite, whitePlayerType, false);
             CreatePlayer(ref playerBlack, blackPlayerType, true);
 
@@ -98,20 +123,25 @@ namespace Konane.Game
             //First player to run out of moves as it becomes their turn loses
             if (!mg.HasLegalMoves(activeBoard, blackToMove) && moveCount > 2)
             {
+                //Reveal winner text and buttons
                 if (blackToMove)
-                    Debug.Log("Black loses!");
+                    if (blackPlayerType == PlayerType.Human)
+                        winner.text = "You lose!";
+                    else
+                        winner.text = "You win!";
                 else
-                    Debug.Log("White loses!");
+                    if (whitePlayerType == PlayerType.Human)
+                        winner.text = "You lose!";
+                    else
+                        winner.text = "You win!";
+
+                playAgain.gameObject.SetActive(true);
+                mainMenu.gameObject.SetActive(true);
                 gs = GameState.GameOver;
             }
 
             if (gs == GameState.Playing)
             {
-                if (blackToMove)
-                    Debug.Log("Black's Turn!");
-                else
-                    Debug.Log("White's Turn!");
-
                 moveCount++;
                 currentPlayer = blackToMove ? playerBlack : playerWhite;
 
@@ -124,18 +154,14 @@ namespace Konane.Game
 
         void OnMoveChosen(Move move)
         {
-            //Note: Will need an eval of the current board state after a move is chosen to verify player to move has legal moves available - might do this in the notify method
-
             activeBoard.MakeMove(move);
             searchBoard.MakeMove(move);
 
-            //Create a separate updateboard that will animate a move - to be used by AI player
+            //Animate the AI moves
             if (currentPlayer is AIPlayer)
                 boardUI.AnimateUpdateBoard(activeBoard, move);
             else
                 boardUI.UpdateBoard(activeBoard);
-
-            //activeBoard.PrintBoard();
 
             blackToMove = !blackToMove;
             NotifyPlayerToMove();
@@ -146,10 +172,13 @@ namespace Konane.Game
             activeBoard.MakeStartMove(move);
             searchBoard.MakeStartMove(move);
 
+            //Animate the AI moves
+            if (currentPlayer is AIPlayer)
+                boardUI.AnimateStartUpdateBoard(activeBoard, move);
+            else
+                boardUI.UpdateBoard(activeBoard);
+
             boardUI.UpdateBoard(activeBoard);
-
-            //activeBoard.PrintBoard();
-
             blackToMove = !blackToMove;
             NotifyPlayerToMove();
         }
@@ -165,7 +194,7 @@ namespace Konane.Game
             if (playerType == PlayerType.Human)
                 player = new HumanPlayer(activeBoard, isBlack);
             else
-                player = new AIPlayer(searchBoard, isBlack, diff);
+                player = new AIPlayer(searchBoard, isBlack);
 
             player.onMoveChosen += OnMoveChosen;
             player.onStartMoveChosen += OnStartMoveChosen; //+= is the same as Delegate.Combine -= is the same as Delegate.Remove

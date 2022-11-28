@@ -35,22 +35,9 @@ namespace Konane.Game
             DisplayFirstScreen();
         }
 
-        /*
-         * General tutorial flow
-         * First Screen - shows the board and gives a general description of the game
-         * Second Screen - Indicates black goes first and must select one of the highlighted moves
-         * Third Screen - Indicates white follows up by removing an adjacent piece
-         * Fourth Screen - Indicates normal gameplay and that moves are done using normal checkers format
-         * Fifth Screen - Shows an endgame state describing how to win
-         * 
-         * All screens except first and fifth will have back/forward buttons
-         * Going to simply update the board space and text/buttons based on a simple integer indexing system. This way I don't need 6 scenes to do something
-         */
-
         public void PrevButton()
         {
             if (idx == 0)
-                //Debug.Log("Should go back to main menu. Idx: " + idx);
                 SceneManager.LoadScene(0);
             else
             {
@@ -63,7 +50,6 @@ namespace Konane.Game
         public void NextButton()
         {
             if (idx == 4)
-                //Debug.Log("Should go back to main menu. Idx: " + idx);
                 SceneManager.LoadScene(0);
             else
             {
@@ -97,7 +83,6 @@ namespace Konane.Game
 
         void DisplayFirstScreen()
         {
-            Debug.Log("DEBUG - Called DisplayFirstScreen!");
             leftButton.GetComponentInChildren<TextMeshProUGUI>().text = "Main Menu";
             rightButton.GetComponentInChildren<TextMeshProUGUI>().text = "Next";
             leftText.text = "Hawaiian checkers, also known as Konane, is a game similar to checkers except the goal is to be the first to force your opponent to run out of moves.";
@@ -107,7 +92,6 @@ namespace Konane.Game
 
         void DisplaySecondScreen()
         {
-            Debug.Log("DEBUG - Called DisplaySecondScreen!");
             leftButton.GetComponentInChildren<TextMeshProUGUI>().text = "Previous";
             rightButton.GetComponentInChildren<TextMeshProUGUI>().text = "Next";
             leftText.text = "Black is always the first to move. The first move allowed is for the black player to remove one of their pieces from any of the highlighted squares.";
@@ -121,7 +105,6 @@ namespace Konane.Game
 
         void DisplayThirdScreen()
         {
-            Debug.Log("DEBUG - Called DisplayThirdScreen!");
             leftButton.GetComponentInChildren<TextMeshProUGUI>().text = "Previous";
             rightButton.GetComponentInChildren<TextMeshProUGUI>().text = "Next";
             leftText.text = "After black selects their piece to remove the white player will choose an adjacent piece to remove. Normal play begins after these opening moves.";
@@ -135,7 +118,6 @@ namespace Konane.Game
 
         void DisplayFourthScreen()
         {
-            Debug.Log("DEBUG - Called DisplayFourthScreen!");
             leftButton.GetComponentInChildren<TextMeshProUGUI>().text = "Previous";
             rightButton.GetComponentInChildren<TextMeshProUGUI>().text = "Next";
             leftText.text = "Regular moves are similar to checkers in that players jump opposing pieces onto an empty square. Multiple jumps are allowed if available.";
@@ -147,7 +129,6 @@ namespace Konane.Game
 
         void DisplayFifthScreen()
         {
-            Debug.Log("DEBUG - Called DisplayFifthScreen!");
             leftButton.GetComponentInChildren<TextMeshProUGUI>().text = "Previous";
             rightButton.GetComponentInChildren<TextMeshProUGUI>().text = "Main Menu";
             leftText.text = "The game ends when a player makes a move resulting in their opponent running out of moves. The last player to move is the winner.";

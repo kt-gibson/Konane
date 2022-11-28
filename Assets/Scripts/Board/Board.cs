@@ -5,8 +5,7 @@ using UnityEngine;
 namespace Konane.Game
 {
     //Credit to Sebastian Lague for demonstrating how to create a board programmatically - https://www.youtube.com/watch?v=U4ogK0MIzqk
-    //AI difficulty note: Could do the following for some difficulty settings - 1. Pure random choice from AI, 2. Limit search depth / time for AI, 3. No limits on the AI
-    //Very important note - This class exists primarily to visualize information for the player. The AI could play the game without this class (minus some validation functions I placed here)
+    //This class exists primarily to visualize information for the player. The AI could play the game without this class (minus some validation functions I placed here)
     public class Board : MonoBehaviour
     {
         [SerializeField] BoardColor boardColor;
@@ -16,12 +15,6 @@ namespace Konane.Game
         //Variables for board generation - using 2d arrays to represent 8x8 board
         MeshRenderer[,] squareRenderers;
         SpriteRenderer[,] pieceRenderers;
-        //[SerializeField] bool invertSquareColors = true; // To be used later if players want to swap board colors - may just leave out for simplicity
-
-        void Awake()
-        {
-            //CreateBoard();
-        }
 
         //This function will drive the initial creation of the board. It will also serve to initialize the boardstate
         //After this though, the boardstate should be driving the actions of this class. Eg - When a piece is taken from boardstate it calls an update method in board to refresh UI elements
@@ -29,7 +22,7 @@ namespace Konane.Game
         {
             Shader squareShader = Shader.Find("Unlit/Color");
             squareRenderers = new MeshRenderer[8, 8];
-            pieceRenderers = new SpriteRenderer[8, 8];//For now just get the board to generate.
+            pieceRenderers = new SpriteRenderer[8, 8];
             string pieceName;
 
             //rank = horizontal (1-8), file = vertical (a-h) - these loops generate the board column by column
@@ -56,7 +49,6 @@ namespace Konane.Game
                     pieceRenderers[file, rank] = pieceRenderer;
                 }
             SetupBoard();
-            //BoardState test = new BoardState(); // This needs to be removed. Have a board state sent in as an argument and it will call the init method
             activeBoard.Init(pieceRenderers);
             searchBoard.Init(pieceRenderers);
         }
@@ -108,8 +100,6 @@ namespace Konane.Game
             return new Vector3(-3.5f + file, -3.5f + rank, z);
         }
 
-        //For the future - allow the board to be swapped - this would mildy change starting positions as black and white would have different layouts.
-        //Also build in a function that will load in the piece of opposite color
         void SetSquareColor(Color light, Color dark, int rank, int file)
         {
             squareRenderers[file, rank].material.color = BoardRepresentation.LightSquare(file, rank) ? light : dark;
@@ -224,7 +214,6 @@ namespace Konane.Game
         //Animate start and end positions for the AI - this will simply highlighting the start and end squares, waiting time t, then resetting and making the move
         IEnumerator AnimateMove(BoardState state, Move move)
         {
-            //Debug.Log("DEBUG - Inside AnimateAIMove");
             float t = 0;
             //Start square color
             SetSelectedSquareColor(move.startPos.rankIdx, move.startPos.fileIdx);
@@ -232,13 +221,38 @@ namespace Konane.Game
             //Target square color
             SetLegalTargetSquareColor(move.targetPos.rankIdx, move.targetPos.fileIdx);
 
-            while (t < 2)
+            while (t < 1.5)
             {
                 yield return null;
                 t += Time.deltaTime;
             }
 
             UpdateBoard(state);
+            //Reset square colors before exiting
+            ResetSquareColors();
+        }
+
+        public void AnimateStartUpdateBoard(BoardState state, Coord move)
+        {
+            StartCoroutine(AnimateStartMove(state, move));
+        }
+
+        //Animate start and end positions for the AI - this will simply highlighting the start and end squares, waiting time t, then resetting and making the move
+        IEnumerator AnimateStartMove(BoardState state, Coord move) //For some reason this is bugged - it doesn't update the board before the human player tries to generate moves - only appears when player is white
+        {
+            float t = 0;
+
+            //Target square color
+            SetLegalTargetSquareColor(move.rankIdx, move.fileIdx);
+
+            while (t < 1.5)
+            {
+                yield return null;
+                t += Time.deltaTime;
+            }
+
+            UpdateBoard(state);
+            //state.PrintBoard();
             //Reset square colors before exiting
             ResetSquareColors();
         }

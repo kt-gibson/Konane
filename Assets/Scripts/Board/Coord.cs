@@ -2,7 +2,7 @@ using System;
 
 namespace Konane
 {
-    public struct Coord : IComparable<Coord> //Does this even need to be IComparable?
+    public struct Coord : IComparable<Coord>
     {
         public readonly int fileIdx;
         public readonly int rankIdx;

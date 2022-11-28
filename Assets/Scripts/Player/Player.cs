@@ -8,7 +8,7 @@ namespace Konane.Game
     {
         public event System.Action<Move> onMoveChosen;
         public event System.Action<Coord> onStartMoveChosen;
-        // Start is called before the first frame update
+
         public abstract void Update();
 
         public abstract void NotifyTurnToMove();
