@@ -8,10 +8,12 @@ namespace Konane.Game
     {
         public event System.Action<Move> onMoveChosen;
         public event System.Action<Coord> onStartMoveChosen;
-        // Start is called before the first frame update
+
         public abstract void Update();
 
         public abstract void NotifyTurnToMove();
+
+        public abstract void NotifyOpeningTurnToMove();
 
         //Note: I suspect Lague assigns the delegate function inside GameManger.OnMoveChosen since he sets player.onMoveChose -= OnMoveChosen
         //This would align with a delegate definition, where the delegate has to be assigned some function at some point.
