@@ -1249,8 +1249,13 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Hawaiian checkers, also known as Konane, is a game similar to checkers
+  m_text: 'Hawaiian checkers, also known as Konane, is a game similar to checkers
     except the goal is to be the first to force your opponent to run out of moves.
+
+
+    Left
+    click to select a piece, click the same piece to confirm your selection. Right
+    click will clear selection.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

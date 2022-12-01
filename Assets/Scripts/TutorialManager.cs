@@ -85,7 +85,8 @@ namespace Konane.Game
         {
             leftButton.GetComponentInChildren<TextMeshProUGUI>().text = "Main Menu";
             rightButton.GetComponentInChildren<TextMeshProUGUI>().text = "Next";
-            leftText.text = "Hawaiian checkers, also known as Konane, is a game similar to checkers except the goal is to be the first to force your opponent to run out of moves.";
+            leftText.text = "Hawaiian checkers, also known as Konane, is a game similar to checkers except the goal is to be the first to force your opponent to run out of moves.\n\nControls:\n" +
+                "Left click to select a piece, left click the same piece to confirm your selection. Right click will clear selection.";
             rightText.text = "The game starts with the board completely filled with pieces.";
             boardUI.LoadBoard(activeBoard, searchBoard, firstBoard);
         }
