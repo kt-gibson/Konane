@@ -15,6 +15,7 @@ namespace Konane.Game
         BoardState searchBoard;
         Board boardUI;
         Options options;
+        public LevelManager lm;
         public Button playAgain;
         public Button mainMenu;
         public TextMeshProUGUI winner;
@@ -105,6 +106,8 @@ namespace Konane.Game
 
         void Update()
         {
+            if (Input.GetKeyDown(KeyCode.Escape))
+                lm.LoadMainMenu();
             if (gs == GameState.Playing)
                 currentPlayer.Update();
         }
